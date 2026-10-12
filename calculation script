@@ -1,0 +1,95 @@
+
+// Parse a value that may include freeform units or depend on dropdown units.
+function parseLengthToFeet(input, dropdownUnit) {
+    if (!input) return NaN;
+
+    let raw = input.toLowerCase().trim();
+
+    // If user typed explicit units, ignore dropdown completely.
+    if (raw.match(/[a-z"]/)) {
+        return parseFreeform(raw);
+    }
+
+    // No units typed → must use dropdown unit
+    if (!dropdownUnit) return NaN;
+
+    let num = parseFloat(raw);
+    if (isNaN(num)) return NaN;
+
+    return convertNumberWithUnit(num, dropdownUnit);
+}
+
+// Handle typed units like "5ft 3in", "1.8m", "63\""
+function parseFreeform(text) {
+    // meters
+    if (text.includes("cm")) return parseFloat(text) * 0.0328084;
+    if (text.includes("m")) return parseFloat(text) * 3.28084;
+
+    let feet = 0;
+    let inches = 0;
+
+    let ftMatch = text.match(/(\d+(?:\.\d+)?)\s*(ft|')/);
+    let inMatch = text.match(/(\d+(?:\.\d+)?)\s*(in|")/);
+
+    if (ftMatch) feet = parseFloat(ftMatch[1]);
+    if (inMatch) inches = parseFloat(inMatch[1]);
+
+    // If only in or only ft supplied
+    if (!ftMatch && text.includes("in")) inches = parseFloat(text);
+    if (!inMatch && text.includes("ft")) feet = parseFloat(text);
+
+    return feet + inches / 12;
+}
+
+function convertNumberWithUnit(value, unit) {
+    switch (unit) {
+        case "ft": return value;
+        case "in": return value / 12;
+        case "m": return value * 3.28084;
+        case "cm": return value * 0.0328084;
+        default: return NaN;
+    }
+}
+
+function calcCord() {
+    const L = parseLengthToFeet(
+        document.getElementById("lenInput").value,
+        document.getElementById("lenUnit").value
+    );
+
+    const W = parseLengthToFeet(
+        document.getElementById("widInput").value,
+        document.getElementById("widUnit").value
+    );
+
+    const H = parseLengthToFeet(
+        document.getElementById("htInput").value,
+        document.getElementById("htUnit").value
+    );
+
+    const resultEl = document.getElementById("result");
+
+    if (isNaN(L) || isNaN(W) || isNaN(H)) {
+        resultEl.innerHTML = "Please enter valid measurements and select units when required.";
+        return;
+    }
+
+    const cubicFeet = L * W * H;
+    const cords = cubicFeet / 128;
+
+    resultEl.innerHTML =
+        "Volume: " + cubicFeet.toFixed(2) + " ft³<br>" +
+        "Cords: " + cords.toFixed(3);
+}
+
+function clearAll() {
+    document.getElementById("lenInput").value = "";
+    document.getElementById("widInput").value = "";
+    document.getElementById("htInput").value = "";
+
+    document.getElementById("lenUnit").value = "";
+    document.getElementById("widUnit").value = "";
+    document.getElementById("htUnit").value = "";
+
+    document.getElementById("result").innerHTML = "";
+}
